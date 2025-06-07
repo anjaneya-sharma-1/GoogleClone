@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { GoogleLogo } from "@/components/ui/google-logo"
 import { GOOGLE_LINKS } from "@/lib/constants/google-links"
+import { useSpeechRecognition } from "@/hooks/use-speech-recognition"
+import { cn } from "@/lib/utils"
 
 interface SearchHeaderProps {
   searchQuery: string
@@ -15,6 +17,13 @@ interface SearchHeaderProps {
 }
 
 export function SearchHeader({ searchQuery, onSearchQueryChange, onSearch }: SearchHeaderProps) {
+  const { isListening, startListening, isSupported } = useSpeechRecognition({
+    onResult: (transcript) => {
+      onSearchQueryChange(transcript)
+      setTimeout(() => onSearch(transcript), 500) // Auto search after voice input
+    },
+  })
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter") {
       onSearch(searchQuery)
@@ -40,9 +49,19 @@ export function SearchHeader({ searchQuery, onSearchQueryChange, onSearch }: Sea
               onKeyPress={handleKeyPress}
               className="w-full h-10 pl-10 pr-10 text-sm border border-gray-300 rounded-full shadow-sm hover:shadow-md focus:shadow-md focus:outline-none focus:border-transparent focus:ring-1 focus:ring-blue-500"
             />
-            <Button variant="ghost" size="sm" className="absolute right-2 top-1/2 transform -translate-y-1/2 p-1">
-              <Mic className="w-4 h-4 text-gray-400" />
-            </Button>
+            {isSupported && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className={cn(
+                  "absolute right-2 top-1/2 transform -translate-y-1/2 p-1",
+                  isListening ? "text-red-500" : "text-gray-400"
+                )}
+                onClick={startListening}
+              >
+                <Mic className={cn("w-4 h-4", isListening && "animate-pulse")} />
+              </Button>
+            )}
           </div>
         </div>
 
@@ -64,12 +83,22 @@ export function SearchHeader({ searchQuery, onSearchQueryChange, onSearch }: Sea
             Images
           </Link>
           <Button variant="ghost" size="sm" className="p-2" asChild>
-            <Link href={GOOGLE_LINKS.products} target="_blank" rel="noopener noreferrer">
+            <Link
+              href={GOOGLE_LINKS.products}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Google apps"
+            >
               <Grid3X3 className="w-4 h-4 text-gray-600" />
             </Link>
           </Button>
           <Button variant="ghost" size="sm" className="p-2" asChild>
-            <Link href={GOOGLE_LINKS.accounts} target="_blank" rel="noopener noreferrer">
+            <Link
+              href={GOOGLE_LINKS.accounts}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Google Account"
+            >
               <User className="w-4 h-4 text-gray-600" />
             </Link>
           </Button>
